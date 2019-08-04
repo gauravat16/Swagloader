@@ -35,12 +35,15 @@ function print_swag_logo(){
     cat << "EOF"
 
 
-     _______.____    __    ____  ___       _______  __        ______        ___       _______   _______ .______      
-    /       |\   \  /  \  /   / /   \     /  _____||  |      /  __  \      /   \     |       \ |   ____||   _  \     
-   |   (----` \   \/    \/   / /  ^  \   |  |  __  |  |     |  |  |  |    /  ^  \    |  .--.  ||  |__   |  |_)  |    
-    \   \      \            / /  /_\  \  |  | |_ | |  |     |  |  |  |   /  /_\  \   |  |  |  ||   __|  |      /     
-.----)   |      \    /\    / /  _____  \ |  |__| | |  `----.|  `--'  |  /  _____  \  |  '--'  ||  |____ |  |\  \----.
-|_______/        \__/  \__/ /__/     \__\ \______| |_______| \______/  /__/     \__\ |_______/ |_______|| _| `._____|
+
+███████╗██╗    ██╗ █████╗  ██████╗ ██╗      ██████╗  █████╗ ██████╗ ███████╗██████╗ 
+██╔════╝██║    ██║██╔══██╗██╔════╝ ██║     ██╔═══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗
+███████╗██║ █╗ ██║███████║██║  ███╗██║     ██║   ██║███████║██║  ██║█████╗  ██████╔╝
+╚════██║██║███╗██║██╔══██║██║   ██║██║     ██║   ██║██╔══██║██║  ██║██╔══╝  ██╔══██╗
+███████║╚███╔███╔╝██║  ██║╚██████╔╝███████╗╚██████╔╝██║  ██║██████╔╝███████╗██║  ██║
+╚══════╝ ╚══╝╚══╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝
+                                                                                    
+
                                                                                                                      
 EOF
 }
@@ -68,6 +71,7 @@ setup_vars(){
     swagger_data="swagger_data"
     swagger_info_file="swagger_api.info"
     make_dirs
+    clean_temp_data
     get_jq
     loadSwaggerPaths
 
@@ -81,6 +85,10 @@ function make_dirs(){
     mkdir -p $(pwd)/$bin
     mkdir -p $(pwd)/$resources
     mkdir -p $(pwd)/$swagger_data
+}
+
+function clean_temp_data(){
+    rm -rf $(pwd)/$swagger_data/*.json
 }
 
 #Downloads os based jq implementation
@@ -187,8 +195,8 @@ function post(){
 #Get request
 function get(){
     echo -e "\n"
-    url=$1
-    curl -X GET $url
+    local __url=$1
+    curl -X GET $__url
     echo -e "\n"
 
 }
@@ -230,22 +238,23 @@ function handleAPISelection(){
 }
 
 function executeAPI(){
-    method="$1"
-    url="$2"
-    jsonDataFile="$3"
+    local __method="$1"
+    local __url="$2"
+    local __jsonDataFile="$3"
 
     case $method in 
     "post")
-        local __count=$(./$bin/jq -r "length" $jsonDataFile)
+        local __count=$(./$bin/jq -r "length" $__jsonDataFile)
         __count=$((__count -1));
-        for i in $(seq 0 $__count)
+        for i in $(seq 0 $__count)  
         do
             echo -e "${GREEN}Posting item - $(($i+1))${STOP}\n"
-            post  "$(./$bin/jq -r ".[$i]" $jsonDataFile)" "$url"
+            post  "$(./$bin/jq -r ".[$i]" $__jsonDataFile)" "$__url"
             echo -e "\n"
         done
     ;;
     "get")
+        get $__url
     ;;
     esac
 }
