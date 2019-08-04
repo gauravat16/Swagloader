@@ -67,6 +67,7 @@ setup_vars(){
 
     review_data_path="review-data"
     bin="bin"
+    jq="./$bin/jq"
     resources="resources"
     swagger_data="swagger_data"
     swagger_info_file="swagger_api.info"
@@ -74,7 +75,6 @@ setup_vars(){
     clean_temp_data
     get_jq
     loadSwaggerPaths
-
 }
 
 function pressEnterToCont(){
@@ -119,6 +119,13 @@ get_jq(){
 
 
 function loadSwaggerPaths(){
+
+    if [ ! -f "$swagger_data/$swagger_info_file" ]
+    then
+        echo -e "${UNDERLINED}swagger_api.info${STOP}${RED} not found${STOP} in $(pwd)/$swagger_data!"
+        exit
+    fi
+
     while  IFS= read -r line
     do
         swagger_paths+=($line)
@@ -136,17 +143,17 @@ function downloadSwaggerPath(){
 
 function apiCountFoundForSwaggerPath(){
     local service=$1
-    local count_paths=$(./$bin/jq -r ".paths | length" $swagger_data/$service-api.json)
+    local count_paths=$($jq -r ".paths | length" $swagger_data/$service-api.json)
     echo $count_paths
 }
 function printAllSwaggerApi(){
     local service=$1
-    local count=$(./$bin/jq -r ".paths | length" $swagger_data/$service-api.json)
+    local count=$($jq -r ".paths | length" $swagger_data/$service-api.json)
     count=$((count -1));
     for i in $(seq 0 $count)
     do
-        local api=$(./$bin/jq -r ".paths|keys[$i]" $swagger_data/$service-api.json)
-        echo -e "   ${GREEN}$i:${STOP}" "${BLUE}$api${STOP}"
+        local api=$($jq -r ".paths|keys[$i]" $swagger_data/$service-api.json)
+        echo -e "   ${GREEN}$i:${STOP}" "${WHITE}$api${STOP}"
     done
 }
 
@@ -181,7 +188,7 @@ function handleNumericMenuInput(){
 }
 
 function getAPIForIndexAndService(){
-    local api=$(./$bin/jq -r ".paths|keys[$1]" $swagger_data/$2-api.json)
+    local api=$($jq -r ".paths|keys[$1]" $swagger_data/$2-api.json)
     echo $api
 }
 
@@ -244,12 +251,12 @@ function executeAPI(){
 
     case $method in 
     "post")
-        local __count=$(./$bin/jq -r "length" $__jsonDataFile)
+        local __count=$($jq -r "length" $__jsonDataFile)
         __count=$((__count -1));
         for i in $(seq 0 $__count)  
         do
             echo -e "${GREEN}Posting item - $(($i+1))${STOP}\n"
-            post  "$(./$bin/jq -r ".[$i]" $__jsonDataFile)" "$__url"
+            post  "$($jq -r ".[$i]" $__jsonDataFile)" "$__url"
             echo -e "\n"
         done
     ;;
@@ -264,7 +271,7 @@ function listAllDataFilesForSwaggerPath(){
     data_files=()
     local __count=0
     for entry in $(ls "$swagger_data/$resources/$__path"); do
-        echo -e "   ${GREEN}$__count:${STOP}" ${BLUE}$entry${STOP}
+        echo -e "   ${GREEN}$__count:${STOP}" ${WHITE}$entry${STOP}
         data_files+=$entry
         __count=$((__count+1))
     done
@@ -274,8 +281,8 @@ function showAPIInfo(){
     path=$1
     api=$2
 
-    local post_result=$(jq -r ".paths|values| .[\""$api\""]|.post.parameters" $swagger_data/$path-api.json)
-    local get_result=$(jq -r ".paths|values| .[\""$api\""]|.get.parameters" $swagger_data/$path-api.json)
+    local post_result=$($jq -r ".paths|values| .[\""$api\""]|.post.parameters" $swagger_data/$path-api.json)
+    local get_result=$($jq -r ".paths|values| .[\""$api\""]|.get.parameters" $swagger_data/$path-api.json)
     echo "post="\"$post_result"\";get="\"$get_result"\""
 }
 
@@ -314,7 +321,7 @@ function swaggerPathMenu(){
     local count=${#swagger_paths[@]}
     for i in $(seq 0 $((count-1)))
     do
-        echo -e "   ${GREEN}$i:${STOP}" ${BLUE}${swagger_paths[$i]}${STOP}
+        echo -e "   ${GREEN}$i:${STOP}" ${WHITE}${swagger_paths[$i]}${STOP}
     done
     echo -e "\n< Exit"
     read option
